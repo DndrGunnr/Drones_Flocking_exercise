@@ -15,7 +15,7 @@ PARAMS: Dict[str, float] = {
     "c1_beta": 70,
     "c2_beta": 2 * np.sqrt(70),
     "c1_gamma": 7,
-    "c2_gamma": 2 * np.sqrt(7)
+    "c2_gamma":  2 * np.sqrt(7)
 }
 
 def sigma_norm(z: np.ndarray):

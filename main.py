@@ -8,10 +8,10 @@ from obstacles import Circle, Wall
 NB_AGENTS = 12 # numbe of agents in the flock
 Nt = 600 # number of simulation steps
 OBSTACLES = [
-    # Circle(np.array([15,2]), 2.),
-    # Circle(np.array([30,7]), 6.),
-    # Wall(np.array([45,15]), 6,20),
-    # Wall(np.array([45,-15]), 6,20),
+    Circle(np.array([15,2]), 2.),
+    Circle(np.array([30,7]), 6.),
+    Wall(np.array([45,15]), 6,20),
+    Wall(np.array([45,-15]), 6,20),
 ]
 INIT_POSE_FLOCK = np.array([-10,0]) # initial position of the flock
 FINAL_POSE_FLOCK = np.array([70,0])
@@ -79,8 +79,14 @@ def main():
         for obstacle in OBSTACLES:
             obstacle.display(ax1)
         fig1.suptitle(f"t = {round(i*dt, 4)} s")
-        ax1.set_xlim(INIT_POSE_FLOCK[0]-INIT_AREA_FLOCK[0]/2, FINAL_POSE_FLOCK[0]+20)
-        ax1.set_ylim(-25,25)
+        #ax1.set_xlim(INIT_POSE_FLOCK[0]-INIT_AREA_FLOCK[0]/2, FINAL_POSE_FLOCK[0]+20)
+        #ax1.set_ylim(-25,25)
+        positions = np.array([agent.get_position() for agent in flock._drone])
+        x_min, x_max = positions[:,0].min() - 10, positions[:,0].max() + 10
+        y_min, y_max = positions[:,1].min() - 10, positions[:,1].max() + 10
+
+        ax1.set_xlim(x_min, x_max)
+        ax1.set_ylim(y_min, y_max)
         ax1.set_aspect('equal')
         fig1.canvas.draw() 
 

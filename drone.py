@@ -80,11 +80,15 @@ class Drone():
         gradient_term = 0.
         consensus_term = 0.
         for i in range(len(qjs)):
-            gradient_term += phi_alpha(sigma_norm(self._pose-qjs[i]))*compute_nij(self._pose, qjs[i])
-            consensus_term += (self._velocity-vjs[i])*compute_aij(self._pose, qjs[i])
+            distance_vector = self._pose - qjs[i]
+            distance_norm = sigma_norm(distance_vector)
+            n_ij = compute_nij(self._pose, qjs[i])
 
-        gradient_term = PARAMS["c1_alpha"]*gradient_term 
-        consensus_term = PARAMS["c2_alpha"]*consensus_term
+            gradient_term += phi_alpha(distance_norm) * n_ij
+            consensus_term += ( vjs[i]-self._velocity ) * compute_aij(self._pose, qjs[i])
+
+        gradient_term *= PARAMS["c1_alpha"]
+        consensus_term *= PARAMS["c2_alpha"]
 
         u_alpha = gradient_term + consensus_term
         return u_alpha
@@ -103,18 +107,23 @@ class Drone():
         Returns:
             u_beta (np.ndarray), of size (2,)
     """
-        # TODO: compute u_beta
+        # TODO: compute u_beta  
         u_beta = 0.
-        gradient_term = 0.
-        consensus_term = 0.
+        beta_agent_pose = 0.
+        beta_agent_vel = 0. 
+        
         for i in range(len(q_obs)):
-            gradient_term += phi_beta(sigma_norm(self._pose-q_obs[i]))*compute_nij(self._pose, q_obs[i])
-            consensus_term += (self._velocity-v_obs[i])*compute_aij(self._pose, q_obs[i])
+            distance_vector = self._pose - q_obs[i]
+            distance_norm = sigma_norm(distance_vector)
+            n_ij = compute_nij(self._pose, q_obs[i])
 
-        gradient_term = PARAMS["c1_beta"]*gradient_term
-        consensus_term = PARAMS["c2_beta"]*consensus_term
-
-        u_beta = gradient_term + consensus_term
+            beta_agent_pose += phi_beta(distance_norm) * n_ij
+            beta_agent_vel += ( v_obs[i]-self._velocity ) * compute_aij(self._pose, q_obs[i])
+            
+            
+        beta_agent_pose *= PARAMS["c1_beta"]
+        beta_agent_vel *= PARAMS["c2_beta"]
+        u_beta = beta_agent_pose + beta_agent_vel
         return u_beta
     
     def u_gamma(self, qr: np.ndarray, vr: np.ndarray)->np.ndarray:
@@ -128,7 +137,7 @@ class Drone():
                 reference velocity of the group.
         """
         # TODO: compute u_gamma
-        u_gamma = 0.
+        u_gamma = -PARAMS["c1_gamma"]*(self._pose-qr) - PARAMS["c2_gamma"]*(self._velocity-vr)
         return u_gamma
 
     def update_cmd(self, neighbors_pose: np.ndarray, neighbors_vel: np.ndarray, obs_pos: np.ndarray, obs_vel: np.ndarray, goal_pose: np.ndarray, goal_vel: np.ndarray):
@@ -153,8 +162,10 @@ class Drone():
         """
         # TODO: compute the control command cmd of each drone
         cmd = self.u_alpha(neighbors_pose, neighbors_vel)
-        #cmd += self.u_beta(obs_pos, obs_vel)
-        #cmd += self.u_gamma(goal_pose, goal_vel)
+        
+        cmd += self.u_gamma(goal_pose, goal_vel)
+
+        cmd += self.u_beta(obs_pos, obs_vel)
 
         
 
@@ -172,8 +183,8 @@ class Drone():
         """
         # TODO: update the acceleration, velocity and position of the drone
         self._acceleration= cmd
-        self._velocity = self._acceleration*self._dt
-        self._pose = self._velocity*self._dt
+        self._velocity = self._velocity + self._acceleration*self._dt
+        self._pose = self._pose + self._velocity*self._dt
 
         self._past_pos.append(self._pose) # for display purpose only
 
