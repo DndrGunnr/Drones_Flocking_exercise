@@ -5,7 +5,7 @@ from flock import Flock
 from obstacles import Circle, Wall
 
 # Flocking parameters
-NB_AGENTS = 12 # numbe of agents in the flock
+NB_AGENTS = 15 # numbe of agents in the flock
 Nt = 600 # number of simulation steps
 OBSTACLES = [
     Circle(np.array([15,2]), 2.),
