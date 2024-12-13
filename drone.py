@@ -77,6 +77,16 @@ class Drone():
         """
         # TODO: compute u_alpha
         u_alpha = 0.
+        gradient_term = 0.
+        consensus_term = 0.
+        for i in range(len(qjs)):
+            gradient_term += phi_alpha(sigma_norm(self._pose-qjs[i]))*compute_nij(self._pose, qjs[i])
+            consensus_term += (self._velocity-vjs[i])*compute_aij(self._pose, qjs[i])
+
+        gradient_term = PARAMS["c1_alpha"]*gradient_term 
+        consensus_term = PARAMS["c2_alpha"]*consensus_term
+
+        u_alpha = gradient_term + consensus_term
         return u_alpha
     
     def u_beta(self, q_obs: np.ndarray, v_obs: np.ndarray)->np.ndarray:
@@ -95,6 +105,16 @@ class Drone():
     """
         # TODO: compute u_beta
         u_beta = 0.
+        gradient_term = 0.
+        consensus_term = 0.
+        for i in range(len(q_obs)):
+            gradient_term += phi_beta(sigma_norm(self._pose-q_obs[i]))*compute_nij(self._pose, q_obs[i])
+            consensus_term += (self._velocity-v_obs[i])*compute_aij(self._pose, q_obs[i])
+
+        gradient_term = PARAMS["c1_beta"]*gradient_term
+        consensus_term = PARAMS["c2_beta"]*consensus_term
+
+        u_beta = gradient_term + consensus_term
         return u_beta
     
     def u_gamma(self, qr: np.ndarray, vr: np.ndarray)->np.ndarray:
@@ -132,7 +152,11 @@ class Drone():
                 shared goal velocity for all drones as a 1D array of shape (2,).
         """
         # TODO: compute the control command cmd of each drone
-        cmd = 0.
+        cmd = self.u_alpha(neighbors_pose, neighbors_vel)
+        #cmd += self.u_beta(obs_pos, obs_vel)
+        #cmd += self.u_gamma(goal_pose, goal_vel)
+
+        
 
         self.update_state(cmd)
     
@@ -147,9 +171,9 @@ class Drone():
                 the control command which is the acceleration of the drone. 1D vector of size (2,)
         """
         # TODO: update the acceleration, velocity and position of the drone
-        self._acceleration= np.zeros(2)
-        self._velocity = np.zeros(2)
-        self._pose = self._pose
+        self._acceleration= cmd
+        self._velocity = self._acceleration*self._dt
+        self._pose = self._velocity*self._dt
 
         self._past_pos.append(self._pose) # for display purpose only
 

@@ -134,7 +134,8 @@ def compute_aij(qi, qj):
         aij: the element (i, j) of the spacial adjacency matrix
     """
     # TODO: write the formula to compute a_ij based on equation 11.
-    aij = 0.
+    sigma_norm_z = sigma_norm(qj-qi)
+    aij = bump_function(sigma_norm_z/ sigma_norm([PARAMS["r"]]))
     return aij
 
 def compute_aij_obstacles(qi, qj):

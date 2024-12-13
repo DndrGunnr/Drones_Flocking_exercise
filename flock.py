@@ -83,6 +83,10 @@ class Flock():
         """
         # TODO: compute A
         A = np.zeros((self._nb_drones, self._nb_drones))
+
+        for i in range(self._nb_drones):
+            for j in range(self._nb_drones):
+                A[i,j] = compute_aij(self._drones_pos[i], self._drones_pos[j])
         return A
     
     def get_laplacian_matrix(self):
@@ -94,7 +98,12 @@ class Flock():
                 the Laplacian of size (_nb_drones, _nb_drones)
         """
         # TODO: compute L
+        
         L = np.zeros((self._nb_drones, self._nb_drones))
+        for i in range(self._nb_drones):
+            L[i,i] = np.sum(self._A[i,:])
+        L= L-self._A
+        
         return L
     
     def get_adjacency_matrix_obstacles(self):
@@ -120,7 +129,7 @@ class Flock():
                 the relative connectivity
         """
         # TODO: compute connectivity
-        rel_con = 0.
+        rel_con = 1/(self._nb_drones-1)*np.linalg.matrix_rank(self.get_laplacian_matrix())
         return rel_con
 
     def compute_deviation_energy(self)->float:
@@ -136,6 +145,18 @@ class Flock():
 
         # TODO: compute deviation_energy
         energy = 0.
+        
+        # computation of the energy
+        for i in range(self._nb_drones):
+            for j in range(self._nb_drones):
+                if self._A[i,j] > 0:
+                    energy += (np.linalg.norm(self._drones_pos[i]-self._drones_pos[j])-PARAMS["d"])**2
+        energy = energy/(nb_graph_edges+1)
+
+        #normalized energy
+        energy = energy/(self._nb_drones*PARAMS["d"]**2)
+        print("energy",energy)   
+
         return  energy
     
     def compute_velocity_mismatch(self)->float:
@@ -149,6 +170,16 @@ class Flock():
         """
         # TODO: compute velocity mismatch
         vel = 0.
+        # computation of the velocity mismatch
+        for i in range(self._nb_drones):
+            vel += np.linalg.norm(self._drones_vel[i])**2
+
+        #velocity mismatch
+        vel=vel/2
+        #normalized velocity mismatch
+        vel = vel/(self._nb_drones)
+        print("vel",vel)
+
         return vel
 
     def compute_cohesion_radius(self)->float:
@@ -160,7 +191,24 @@ class Flock():
                 the cohesion radius
         """
         # TODO: compute cohesion radius
+        sum_x=0
+        sum_y=0
+
         radius = 0.
+
+        # computation of centroid position
+        sum_x = sum(self._drones_pos[:,0])
+        sum_y = sum(self._drones_pos[:,1])
+        mean_x = sum_x/(self._nb_drones)
+        mean_y = sum_y/(self._nb_drones)
+        #print(mean_x,mean_y)
+
+        for i in range(self._nb_drones):
+            distance = np.linalg.norm(self._drones_pos[i,:]-np.array([mean_x,mean_y]))
+            radius = max(radius, distance)
+            #print("distance",distance)
+
+        #print("radius",radius)
         return radius
 
     def update_flock(self, goal_pos: np.ndarray, goal_vel: np.ndarray):  
